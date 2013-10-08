@@ -5,22 +5,26 @@ from bottle import Bottle, response
 
 # Co-opted the Bottle json import strategy
 try:
-    #pylint: disable=F0401 
-    from json import dumps as json_dumps
-except ImportError: # pragma: no cover
-    try: 
-        #pylint: disable=F0401 
-        from simplejson import dumps as json_dumps
-    except ImportError:
+    #pylint: disable=F0401
+    from bson.json_util import dumps as json_dumps
+except ImportError:
+    try:
+        #pylint: disable=F0401
+        from json import dumps as json_dumps
+    except ImportError: # pragma: no cover
         try: 
             #pylint: disable=F0401
-            from django.utils.simplejson import dumps as json_dumps
+            from simplejson import dumps as json_dumps
         except ImportError:
-            #pylint: disable=W0613
-            def json_dumps(data):
-                ''' Place holder for lack of appropriate json lib '''
-                raise ImportError(
-                    'JSON support requires Python 2.6 or simplejson.')
+            try:
+                #pylint: disable=F0401
+                from django.utils.simplejson import dumps as json_dumps
+            except ImportError:
+                #pylint: disable=W0613
+                def json_dumps(data):
+                    ''' Place holder for lack of appropriate json lib '''
+                    raise ImportError(
+                        'JSON support requires Python 2.6 or simplejson.')
 
 
 class JsonFormatting(object):
