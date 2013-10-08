@@ -1,8 +1,8 @@
 ''' Formats output in a json schema. To be used for making json based API 
 servers '''
 
-from bottle import Bottle, response
-from bottle import request, template, tob, ERROR_PAGE_TEMPLATE
+from bottle import Bottle, response, request, JSONPlugin
+from bottle import template, tob, ERROR_PAGE_TEMPLATE
 
 # Co-opted the Bottle json import strategy
 try:
@@ -57,10 +57,8 @@ class JsonFormatting(object):
         if self.app.config.autojson:
             self.app.uninstall('json')
             print self.app.plugins
-        self.function_type = type(app.default_error_handler)
-        self.function_original = app.default_error_handler
-        self.app.default_error_handler = self.function_type(
-                self.custom_error_handler, app, Bottle)
+        self.original_error_handler = getattr(self.app , 'default_error_handler')
+        setattr(self.app, 'default_error_handler', self.custom_error_handler)
 
     #pylint: disable=W0613
     def apply(self, callback, route):
@@ -84,10 +82,9 @@ class JsonFormatting(object):
 
     def close(self):
         ''' Put the original function back on uninstall '''
-        self.app.default_error_handler = self.function_type(
-                self.function_original, self.app, Bottle)
+        setattr(self.app, 'default_error_handler', self.original_error_handler)
         if self.app.config.autojson:
-            self.app.install('json')
+            self.app.install(JSONPlugin())
             print self.app.plugins
 
     def get_response_object(self, status):
@@ -104,7 +101,7 @@ class JsonFormatting(object):
         else:
             self.get_response_object(2)
         
-    def custom_error_handler(self, res, error):
+    def custom_error_handler(self, error):
         if request.is_json:
             ''' Monkey patch method for json formatting error responses '''
             response_object = self.get_response_object(1)
