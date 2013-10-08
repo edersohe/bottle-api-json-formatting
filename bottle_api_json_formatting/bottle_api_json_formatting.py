@@ -85,6 +85,7 @@ class JsonFormatting(object):
                     'status': self.statuses.get(status),
                     'status_code': status,
                     'data': None,
+                    'error': None
                 }
             return json_response
         else:
@@ -100,9 +101,9 @@ class JsonFormatting(object):
                     'message': error.body,
                 }
             if self.debug:
-                response_object['debug'] = {
-                        'exception': str(error.exception),
-                        'traceback': error.traceback,
+                response_object['error']['debug'] = {
+                        'exception': repr(error.exception),
+                        'traceback': repr(error.traceback),
                     }
             json_response = json_dumps(response_object)
             response.content_type = 'application/json'
