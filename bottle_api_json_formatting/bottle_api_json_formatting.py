@@ -2,6 +2,7 @@
 servers '''
 
 from bottle import Bottle, response
+from bottle import request, template, tob, ERROR_PAGE_TEMPLATE
 
 # Co-opted the Bottle json import strategy
 try:
@@ -62,11 +63,13 @@ class JsonFormatting(object):
         def wrapper(*a, **ka):
             ''' Encapsulate the result in json '''
             output = callback(*a, **ka)
-            response_object = self.get_response_object(0)
-            response_object['data'] = output
-            json_response = json_dumps(response_object)
-            response.content_type = 'application/json'
-            return json_response
+            if 'application/json' in request.headers.get('Accept', ''):
+                response_object = self.get_response_object(0)
+                response_object['data'] = output
+                json_response = json_dumps(response_object)
+                response.content_type = 'application/json'
+                return json_response
+            return output
         return wrapper
 
     def close(self):
@@ -88,18 +91,20 @@ class JsonFormatting(object):
             self.get_response_object(2)
         
     def custom_error_handler(self, res, error):
-        ''' Monkey patch method for json formatting error responses '''
-        response_object = self.get_response_object(1)
-        response_object['error'] = {
-                'status_code': error.status_code,
-                'status': error.status_line,
-                'message': error.body,
-            }
-        if self.debug:
-            response_object['debug'] = {
-                    'exception': str(error.exception),
-                    'traceback': error.traceback,
+        if 'application/json' in request.headers.get('Accept', ''):
+            ''' Monkey patch method for json formatting error responses '''
+            response_object = self.get_response_object(1)
+            response_object['error'] = {
+                    'status_code': error.status_code,
+                    'status': error.status_line,
+                    'message': error.body,
                 }
-        json_response = json_dumps(response_object)
-        response.content_type = 'application/json'
-        return json_response
+            if self.debug:
+                response_object['debug'] = {
+                        'exception': str(error.exception),
+                        'traceback': error.traceback,
+                    }
+            json_response = json_dumps(response_object)
+            response.content_type = 'application/json'
+            return json_response
+        return tob(template(ERROR_PAGE_TEMPLATE, e=error))
