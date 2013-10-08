@@ -7,7 +7,7 @@ from bottle import Bottle, response
 try:
     #pylint: disable=F0401
     from bson.json_util import dumps as json_dumps
-except:
+except ImportError:
     try:
         #pylint: disable=F0401
         from json import dumps as json_dumps
