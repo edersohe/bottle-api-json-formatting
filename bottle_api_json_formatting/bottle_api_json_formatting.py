@@ -54,6 +54,9 @@ class JsonFormatting(object):
     def setup(self, app):
         ''' Handle plugin install '''
         self.app = app
+        if self.app.config.autojson:
+            self.app.uninstall('json')
+            print self.app.plugins
         self.function_type = type(app.default_error_handler)
         self.function_original = app.default_error_handler
         self.app.default_error_handler = self.function_type(
@@ -83,6 +86,9 @@ class JsonFormatting(object):
         ''' Put the original function back on uninstall '''
         self.app.default_error_handler = self.function_type(
                 self.function_original, self.app, Bottle)
+        if self.app.config.autojson:
+            self.app.install('json')
+            print self.app.plugins
 
     def get_response_object(self, status):
         ''' Helper for building the json object '''
