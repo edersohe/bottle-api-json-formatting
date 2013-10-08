@@ -22,7 +22,7 @@ except ImportError:
                 from django.utils.simplejson import dumps as json_dumps
             except ImportError:
                 #pylint: disable=W0613
-                def json_dumps(data):
+                def json_dumps(data, **kwargs):
                     ''' Place holder for lack of appropriate json lib '''
                     raise ImportError(
                         'JSON support requires Python 2.6 or simplejson.')
@@ -41,7 +41,8 @@ class JsonFormatting(object):
             2: 'internal failure',
         }
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, **kwargs):
+        self.dumps = lambda obj: json_dumps(obj, **kwargs)
         self.debug = debug
         self.app = None
         self.function_type = None
@@ -72,7 +73,7 @@ class JsonFormatting(object):
             if request.is_json:
                 response_object = self.get_response_object(0)
                 response_object['data'] = output
-                json_response = json_dumps(response_object)
+                json_response = self.dumps(response_object)
                 response.content_type = 'application/json'
                 return json_response
             return output
@@ -111,7 +112,7 @@ class JsonFormatting(object):
                         'exception': repr(error.exception),
                         'traceback': repr(error.traceback),
                     }
-            json_response = json_dumps(response_object)
+            json_response = self.dumps(response_object)
             response.content_type = 'application/json'
             return json_response
         return tob(template(ERROR_PAGE_TEMPLATE, e=error))
