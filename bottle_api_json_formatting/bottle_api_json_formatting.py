@@ -107,7 +107,7 @@ class JsonFormatting(object):
                     'status': error.status_line,
                     'message': error.body,
                 }
-            if self.debug:
+            if self.debug and error.traceback:
                 response_object['error']['debug'] = {
                         'exception': repr(error.exception),
                         'traceback': repr(error.traceback),
