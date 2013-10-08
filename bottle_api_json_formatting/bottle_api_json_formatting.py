@@ -47,6 +47,9 @@ class JsonFormatting(object):
         self.function_type = None
         self.function_original = None
 
+    def is_json(self):
+        return ('application/json' in request.headers.get('Accept', ''))
+
     def setup(self, app):
         ''' Handle plugin install '''
         self.app = app
@@ -61,9 +64,12 @@ class JsonFormatting(object):
         if not json_dumps: 
             return callback
         def wrapper(*a, **ka):
+            ''' Monkey patch method is_json in thread_local request '''
+            is_json = self.is_json()
+            setattr(request, 'is_json', property(lambda self: is_json,))
             ''' Encapsulate the result in json '''
             output = callback(*a, **ka)
-            if 'application/json' in request.headers.get('Accept', ''):
+            if request.is_json:
                 response_object = self.get_response_object(0)
                 response_object['data'] = output
                 json_response = json_dumps(response_object)
@@ -92,7 +98,7 @@ class JsonFormatting(object):
             self.get_response_object(2)
         
     def custom_error_handler(self, res, error):
-        if 'application/json' in request.headers.get('Accept', ''):
+        if request.is_json:
             ''' Monkey patch method for json formatting error responses '''
             response_object = self.get_response_object(1)
             response_object['error'] = {
