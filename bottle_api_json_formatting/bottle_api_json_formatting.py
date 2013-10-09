@@ -57,7 +57,6 @@ class JsonFormatting(object):
         self.app = app
         if self.app.config.autojson:
             self.app.uninstall('json')
-            print self.app.plugins
         original_error_handler = getattr(self.app, 'default_error_handler')
         self.original_error_handler = original_error_handler
         setattr(self.app, 'default_error_handler', self.custom_error_handler)
@@ -87,7 +86,6 @@ class JsonFormatting(object):
         setattr(self.app, 'default_error_handler', self.original_error_handler)
         if self.app.config.autojson:
             self.app.install(JSONPlugin())
-            print self.app.plugins
 
     def get_response_object(self, status):
         ''' Helper for building the json object '''
