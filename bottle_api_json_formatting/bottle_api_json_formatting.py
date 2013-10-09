@@ -48,6 +48,7 @@ class JsonFormatting(object):
         self.function_type = None
         self.function_original = None
 
+    @property
     def is_json(self):
         return ('application/json' in request.headers.get('Accept', ''))
 
@@ -57,7 +58,8 @@ class JsonFormatting(object):
         if self.app.config.autojson:
             self.app.uninstall('json')
             print self.app.plugins
-        self.original_error_handler = getattr(self.app , 'default_error_handler')
+        original_error_handler = getattr(self.app, 'default_error_handler')
+        self.original_error_handler = original_error_handler
         setattr(self.app, 'default_error_handler', self.custom_error_handler)
 
     #pylint: disable=W0613
@@ -68,8 +70,7 @@ class JsonFormatting(object):
 
         def wrapper(*a, **ka):
             ''' Monkey patch method is_json in thread_local request '''
-            is_json = self.is_json()
-            setattr(request, 'is_json', property(lambda self: is_json,))
+            setattr(request, 'is_json', getattr(self, 'is_json'))
             ''' Encapsulate the result in json '''
             output = callback(*a, **ka)
             if request.is_json:
@@ -103,7 +104,7 @@ class JsonFormatting(object):
             self.get_response_object(2)
 
     def custom_error_handler(self, error):
-        if request.is_json:
+        if self.is_json:
             ''' Monkey patch method for json formatting error responses '''
             response_object = self.get_response_object(1)
             response_object['error'] = {
